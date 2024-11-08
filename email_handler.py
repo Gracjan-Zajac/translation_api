@@ -1,12 +1,11 @@
 import os
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv
 import imaplib
 import email
 from email.header import decode_header
 
 # Load environment variables
-dotenv_path = find_dotenv()
-load_dotenv(dotenv_path)
+load_dotenv()
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
