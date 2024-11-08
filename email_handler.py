@@ -20,11 +20,15 @@ def connect_to_inbox():
 
 # Search for unread emails with PDF attachment
 def search_for_pdf_emails(mail):
-    status, messages = mail.search(None, "UNSEEN")      # Search for unread emails
-    email_ids = messages[0].split()     # List of unread email IDs
+    status, messages = mail.search(None, "UNSEEN")
+    email_ids = messages[0].split()
     pdf_emails = []
 
-    print(f"Total emails found: {len(email_ids)}")  # Check if emails are being found
+    if not email_ids:
+        print("No unread emails found.")
+        return pdf_emails  # Return empty list if no unread emails
+
+    print(f"Total emails found: {len(email_ids)}") 
 
     for num in email_ids:
         status, msg_data = mail.fetch(num, "(RFC822)")
@@ -37,12 +41,16 @@ def search_for_pdf_emails(mail):
         print(f"Processing email with subject: {subject}")
 
         # Check for attachments and look for a PDF
+        has_pdf = False
         for part in msg.walk():
             if part.get_content_type() == "application/pdf":
                 print("PDF attachment found.")
-                download_pdf_attachment(mail, (num, part))      # Download each PDF found
-            else:
-                print("No PDF attachment found.")
+                download_pdf_attachment(mail, (num, part))
+                pdf_emails.append((num, part))  # Store the email ID and part for each PDF
+                has_pdf = True
+        
+        if not has_pdf:
+            print("No PDF attachment found in this email.")
     
     print("All unread emails processed.")
     return pdf_emails
@@ -68,12 +76,8 @@ def receive_email_with_pdf():
     mail = connect_to_inbox()
     pdf_emails = search_for_pdf_emails(mail)
 
-    # Check if any PDFs were found before iterating
     if pdf_emails:
-        for email_data in pdf_emails:
-            download_pdf_attachment(mail, email_data)
-        else:
-            print("No unread emails with PDF attachments found.")
+        print("Unread emails with PDF attachments were processed.")
     
     mail.logout()
 
