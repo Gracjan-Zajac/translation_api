@@ -21,7 +21,7 @@ def connect_to_inbox():
 # Search for unread emails with PDF attachment
 def search_for_pdf_emails(mail):
     status, messages = mail.search(None, "UNSEEN")      # Search for unread emails
-    email_ids = messages[0].split()
+    email_ids = messages[0].split()     # List of unread email IDs
     pdf_emails = []
 
     print(f"Total emails found: {len(email_ids)}")  # Check if emails are being found
@@ -40,9 +40,12 @@ def search_for_pdf_emails(mail):
         for part in msg.walk():
             if part.get_content_type() == "application/pdf":
                 print("PDF attachment found.")
-                pdf_emails.append((num, part))
-                break       # Stop after finding the first PDF attachment in the email
-        return pdf_emails
+                download_pdf_attachment(mail, (num, part))      # Download each PDF found
+            else:
+                print("No PDF attachment found.")
+    
+    print("All unread emails processed.")
+    return pdf_emails
     
 # Download the PDF attachment
 def download_pdf_attachment(mail, email_data):
@@ -65,14 +68,13 @@ def receive_email_with_pdf():
     mail = connect_to_inbox()
     pdf_emails = search_for_pdf_emails(mail)
 
-    # Download attachments from each email with a PDF
-    pdf_paths = []
-    for email_data in pdf_emails:
-        pdf_path = download_pdf_attachment(mail, email_data)
-        if pdf_path:
-            pdf_paths.append(pdf_path)
+    # Check if any PDFs were found before iterating
+    if pdf_emails:
+        for email_data in pdf_emails:
+            download_pdf_attachment(mail, email_data)
+        else:
+            print("No unread emails with PDF attachments found.")
     
     mail.logout()
-    return pdf_paths  # Return list of downloaded PDF paths for further processing
 
 receive_email_with_pdf()
