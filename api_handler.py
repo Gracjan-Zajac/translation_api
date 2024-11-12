@@ -34,10 +34,11 @@ def upload_pdf():
                 # Send the POST request to upload the PDF
                 response = requests.post(url, headers=headers, files=files, data=data)
                 
-                # Print the full response from the server
+                # Print the response for each file
+                print(f"File: {filename}")
                 print("Response Status Code:", response.status_code)
                 print("Response Text:", response.text)
-                return response.json() if response.status_code == 200 else None
+                print("\n" + "-"*40 + "\n")  # Divider between responses
 
             finally:
                 files["file"].close()  # Ensure the file is closed after the request
