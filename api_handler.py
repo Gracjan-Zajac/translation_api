@@ -1,54 +1,46 @@
 import os
 import requests
+import json
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-
 HANDWRITINGOCR_API_KEY = os.getenv("HANDWRITINGOCR_API_KEY")
 
-# HandwritingOCR API connetion
-def extract_text_from_pdfs():
+
+def upload_pdf():
     attachments_folder = "attachments"
-    extracted_folder = "extracted"
+    url = "https://www.handwritingocr.com/api/v1/documents"
 
-    os.makedirs(extracted_folder, exist_ok=True)
+    headers = {
+        "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}"
+    }
 
-    url = "https://www.handwritingocr.com/api/v1/documents"      # HandwritingOCR API endpoint
-
+    # Use the first PDF file in the attachments folder
     for filename in os.listdir(attachments_folder):
-        pdf_path = os.path.join(attachments_folder, filename)
-        output_path = os.path.join(extracted_folder, f"{os.path.splitext(filename)[0]}.docx")
+        if filename.endswith(".pdf"):
+            pdf_path = os.path.join(attachments_folder, filename)
+            
+            # Prepare file and payload for the request
+            files = {
+                "file": open(pdf_path, "rb")
+            }
+            data = {
+                "action": "transcribe",
+                "extractor_id": 16  # Adjust if required by the API
+            }
 
-        # Prepare headers and file for request
-        headers = {
-                "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}"
-        }
-        files = {
-                "file": open(pdf_path, "rb")  # Open the PDF file in binary mode
-        }
+            try:
+                # Send the POST request to upload the PDF
+                response = requests.post(url, headers=headers, files=files, data=data)
+                
+                # Print the full response from the server
+                print("Response Status Code:", response.status_code)
+                print("Response Text:", response.text)
+                return response.json() if response.status_code == 200 else None
 
-        try:
-            # Send the POST request
-            response = requests.post(url, headers=headers, files=files)
+            finally:
+                files["file"].close()  # Ensure the file is closed after the request
 
-            # Handle the response
-            if response.status_code == 200:
-                # Save the extracted content to "extracted" folder
-                with open(output_path, "wb") as f:
-                    f.write(response.content)
-                print(f"Extracted text saved as: {output_path}")
-
-                # Delete the original PDF
-                os.remove(pdf_path)
-                print(f"Deleted original PDF: {pdf_path}")
-
-            else:
-                print(f"Failed to extract text for {filename}. Status code: {response.status_code}")
-                print(response.text)
-
-        finally:
-            # Ensure file is closed after the request
-            files["file"].close()
-
-extract_text_from_pdfs()
+# Run the function
+upload_pdf()
