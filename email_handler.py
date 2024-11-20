@@ -1,14 +1,21 @@
+import smtplib
+import email
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+from email.header import decode_header
+import imaplib
 import os
 from dotenv import load_dotenv
-import imaplib
-import email
-from email.header import decode_header
+
 
 # Load environment variables
 load_dotenv()
 
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
+ALLOWED_SENDERS = os.getenv("ALLOWED_SENDERS", "").split(", ")
 
 # Connect to the Gmail IMAP server
 def connect_to_inbox():
@@ -33,23 +40,34 @@ def search_for_pdf_emails(mail):
         status, msg_data = mail.fetch(num, "(RFC822)")
         msg = email.message_from_bytes(msg_data[0][1])
 
-        # Print subject for each email to verify if it's fetching correctly
-        subject = decode_header(msg["Subject"])[0][0]
-        if isinstance(subject, bytes):
-            subject = subject.decode()
-        print(f"Processing email with subject: {subject}")
+        #Decode sender's email address
+        sender = msg["From"]
+        if sender:
+            sender = email.utils.parseaddr(sender)[1]
 
-        # Check for attachments and look for a PDF
-        has_pdf = False
-        for part in msg.walk():
-            if part.get_content_type() == "application/pdf":
-                print("PDF attachment found.")
-                download_pdf_attachment(mail, (num, part))
-                pdf_emails.append((num, part))  # Store the email ID and part for each PDF
-                has_pdf = True
-        
-        if not has_pdf:
-            print("No PDF attachment found in this email.")
+        if sender in ALLOWED_SENDERS:
+            print(f"Processing email from allowed sender: {sender}")
+
+            # Print subject for each email to verify if it's fetching correctly
+            subject = decode_header(msg["Subject"])[0][0]
+            if isinstance(subject, bytes):
+                subject = subject.decode()
+            print(f"Processing email with subject: {subject}")
+
+            # Check for attachments and look for a PDF
+            has_pdf = False
+            for part in msg.walk():
+                if part.get_content_type() == "application/pdf":
+                    print("PDF attachment found.")
+                    download_pdf_attachment(mail, (num, part))
+                    pdf_emails.append((num, part))  # Store the email ID and part for each PDF
+                    has_pdf = True
+            
+            if not has_pdf:
+                print("No PDF attachment found in this email.")
+
+        else:
+            print(f"Email from {sender} ignored (not in allowed senders).")
     
     print("All unread emails processed.")
     return pdf_emails
@@ -69,6 +87,28 @@ def download_pdf_attachment(mail, email_data):
         print(f"Downloaded: {filename}")
         return filepath
     return None
+
+def send_email_with_attachment(to_email, subject, body, attachment_path):
+    msg = MIMEMultipart()
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg["Subject"] = subject
+
+    msg.attach(MIMEText(body, "plain"))
+
+    with open(attachment_path, "rb") as attachment:
+        part = MIMEBase("application", "ocet-stream")
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(attachment_path)}")
+        msg.attach(part)
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+    print(f"Email with attachment sent to {to_email}")
 
 # Main function to run email receiving process
 def receive_email_with_pdf():
