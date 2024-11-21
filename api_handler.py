@@ -81,7 +81,10 @@ def translate_document():
                     output_path,
                     target_lang="EN-GB",
                 )
+                os.remove(input_path)
                 print("docu translated")
+                return(output_path)
+
 
             except deepl.DocumentTranslationException as error:
                 # If an error occurs during document translation after the document was
@@ -96,5 +99,4 @@ def translate_document():
             except deepl.DeepLException as error:
                 # Errors during upload raise a DeepLException
                 print(error)
-
-translate_document()
+                

@@ -2,6 +2,7 @@ import os
 import email
 from email.header import decode_header
 from email_handler import connect_to_inbox, send_email_with_attachment
+from api_handler import translate_document
 
 ALLOWED_SENDERS = os.getenv("ALLOWED_SENDERS", "").split(", ")
 
@@ -22,7 +23,7 @@ def download_pdf_attachment(mail, email_data):
     return None
 
 # Search and download PDFs from unread emails. Extract and translate text. Send translated .docx file back. 
-def search_for_pdf_emails(mail):
+def manage_attachment(mail):
     status, messages = mail.search(None, "UNSEEN")
     email_ids = messages[0].split()
     pdf_emails = []
@@ -57,6 +58,10 @@ def search_for_pdf_emails(mail):
                 if part.get_content_type() == "application/pdf":
                     print("PDF attachment found.")
                     download_pdf_attachment(mail, (num, part))
+                    # TO ADD: extract file
+                    #translated_document = translate_document()
+                    #send_email_with_attachment(sender, translated_document)
+                    #os.remove(translated_document)
                     pdf_emails.append((num, part))  # Store the email ID and part for each PDF
                     has_pdf = True
             
@@ -71,11 +76,9 @@ def search_for_pdf_emails(mail):
 
 def receive_attachments():
     mail = connect_to_inbox()
-    pdf_emails = search_for_pdf_emails(mail)
+    pdf_emails = manage_attachment(mail)
 
     if pdf_emails:
-        print("done")
+        print("All PDF files processed")
 
     mail.logout()
-
-receive_attachments()

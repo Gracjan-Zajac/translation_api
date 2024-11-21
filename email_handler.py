@@ -16,13 +16,13 @@ def connect_to_inbox():
     mail.select("inbox")
     return mail
 
-def send_email_with_attachment(to_email, subject, body, attachment_path):
+def send_email_with_attachment(to_email, attachment_path):
     msg = MIMEMultipart()
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
-    msg["Subject"] = subject
+    msg["Subject"] = "Your translated document"
 
-    msg.attach(MIMEText(body, "plain"))
+    #msg.attach(MIMEText(body, "plain"))
 
     with open(attachment_path, "rb") as attachment:
         part = MIMEBase("application", "ocet-stream")
