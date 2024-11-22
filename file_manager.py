@@ -8,22 +8,25 @@ ALLOWED_SENDERS = os.getenv("ALLOWED_SENDERS", "").split(", ")
 
 # Download the PDF attachment
 def download_pdf_attachment(mail, email_data):
+    attachment_folder = "attachments"
     email_id, part = email_data
     filename = part.get_filename()
     if filename:
         #Decode filename if needed
         filename = decode_header(filename)[0][0].decode("utf-8") if isinstance(filename, bytes) else filename
-        filepath = os.path.join("attachments", filename)    # Save in an "attachments" folder
+        filepath = os.path.join(attachment_folder, filename)    # Save in an "attachments" folder
 
         # Write the PDF file to the directory
         with open(filepath, "wb") as f:
             f.write(part.get_payload(decode=True))
         print(f"Downloaded: {filename}")
-        return filepath
+        return filepath, filename
     return None
 
 # Search and download PDFs from unread emails. Extract and translate text. Send translated .docx file back. 
 def manage_attachment(mail):
+    extracted_folder = "extracted"
+    translated_folder = "translated"
     status, messages = mail.search(None, "UNSEEN")
     email_ids = messages[0].split()
     pdf_emails = []
@@ -57,8 +60,8 @@ def manage_attachment(mail):
             for part in msg.walk():
                 if part.get_content_type() == "application/pdf":
                     print("PDF attachment found.")
-                    download_pdf_attachment(mail, (num, part))
-                    # TO ADD: extract file
+                    pdf_path, pdf_name = download_pdf_attachment(mail, (num, part))
+                    # TO ADD: extract_pdf()
                     #translated_document = translate_document()
                     #send_email_with_attachment(sender, translated_document)
                     #os.remove(translated_document)
@@ -82,3 +85,6 @@ def receive_attachments():
         print("All PDF files processed")
 
     mail.logout()
+
+
+receive_attachments()
