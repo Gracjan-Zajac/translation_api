@@ -11,6 +11,7 @@ DEEPL_API_KEY = os.getenv("DEEPL_API_KEY")
 
 def upload_pdf(pdf_path):
     url = "https://www.handwritingocr.com/api/v2/documents"
+
     headers = {
         "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}",
         # "Accept": "application/pdf",
@@ -21,7 +22,6 @@ def upload_pdf(pdf_path):
         "file": open(pdf_path, "rb"),
     }
 
-
     data = {
         "action": "transcribe",
     }
@@ -30,73 +30,55 @@ def upload_pdf(pdf_path):
     files["file"].close()
 
     document_id = response.json()["document_id"]
-    document_status = response.json()["status"]
 
     return document_id
 
-    # while True:
-    #     if document_status == "processed":
-    #         print(document_id)
-    #         print(document_status)
-    #         return document_id
-    #     else:
-    #         time.sleep(10)
+def get_status(document_id):
+    url = f"https://www.handwritingocr.com/api/v2/documents/{document_id}"
 
-# def upload_pdf():
-#     attachments_folder = "attachments"
-#     url = "https://www.handwritingocr.com/api/v1/documents"
+    headers = {
+        "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}",
+    }
 
-#     headers = {
-#         "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}"
-#     }
+    response = requests.get(url,headers=headers)
+    status = response.json()["status"]
 
-#     # Use the first PDF file in the attachments folder
-#     for filename in os.listdir(attachments_folder):
-#         if filename.endswith(".pdf"):
-#             pdf_path = os.path.join(attachments_folder, filename)
-            
-#             # Prepare file and payload for the request
-#             files = {
-#                 "file": open(pdf_path, "rb")
-#             }
-#             data = {
-#                 "action": "transcribe",
-#                 "extractor_id": 1
-#             }
+    return status
 
-#             try:
-#                 # Send the POST request to upload the PDF
-#                 response = requests.post(url, headers=headers, files=files, data=data)
-                
-#                 # Print the response for each file
-#                 print(f"File: {filename}")
-#                 print("Response Status Code:", response.status_code)
-#                 print("Response Text:", response.text)
-#                 print("\n" + "-"*40 + "\n")  # Divider between responses
+def download_exctracted_docx(document_id, filename, folder):
+    extracted_folder = folder
+    filename = filename[:-4] + ".docx"
+    extracted_docx = os.path.join(extracted_folder, filename)
+    url = f"https://www.handwritingocr.com/api/v2/documents/{document_id}.docx"
 
-#             finally:
-#                 files["file"].close()
+    headers = {
+        "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}",
+    }
+    
+    output_file = extracted_docx
 
-#     return response.json()["document_id"]
+    response = requests.get(url,headers=headers)
 
+    with open(output_file, "wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            file.write(chunk)
 
-# def get_detail():
-#     url = "https://www.handwritingocr.com/api/v1/documents/vZ9NBDv9rX/download/wxv148tU4R9v6h3X4tDYinqbVmPVMqoP0vxLlcfR/transcribe.docx"
-#     extracted_folder = "extracted"
-#     output_path = os.path.join(extracted_folder, "test.docx")
-#     headers = {
-#       'Authorization': f'Bearer {HANDWRITINGOCR_API_KEY}',
-#     }
+def extract_pdf(pdf_path, pdf_name, output_folder):
+    extracted_path = os.path.join(output_folder, pdf_name)
+    pdf_path = pdf_path
+    document_id = upload_pdf(pdf_path)
 
-#     response = requests.request('GET', url, headers=headers)
-#     with open(output_path, "wb") as f:
-#         f.write(response.content)
+    time.sleep(20)
 
+    document_status = get_status(document_id)
+    print(document_status)
 
-# # Run the function
-# upload_pdf()
-
-# get_detail()
+    while True:
+        if document_status == "processed":
+            download_exctracted_docx(document_id, extracted_path)
+            break
+        else:
+            time.sleep(20)
 
 def translate_document(input_path, output_path):
     translator = deepl.Translator(DEEPL_API_KEY)
@@ -126,5 +108,11 @@ def translate_document(input_path, output_path):
         # Errors during upload raise a DeepLException
         print(error)
 
+pdf_path = "/home/gracjan/dev/translation_api/attachments/02 Active Cars Form - C GR-1.pdf"
+pdf_name = "02 Active Cars Form - C GR-1.pdf"
+folder = "extracted"
+path = os.path.join(folder, pdf_name)
 
-upload_pdf("attachments/02 Active Cars Form - C GR-1.pdf")
+# extract_pdf(pdf_path, pdf_name, folder)
+
+download_exctracted_docx("WA9ArO38pE", pdf_name, folder)
