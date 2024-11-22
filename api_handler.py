@@ -56,23 +56,26 @@ def download_exctracted_docx(document_id, filename, output_folder):
     
     output_file = extracted_docx
 
-    response = requests.get(url,headers=headers)
+    response = requests.get(url, headers=headers, stream=True)
 
     with open(output_file, "wb") as file:
         for chunk in response.iter_content(chunk_size=8192):
             file.write(chunk)
+
+    return output_file, filename
 
 def extract_pdf(pdf_path, pdf_name, output_folder):
     document_id = upload_pdf(pdf_path)
 
     time.sleep(20)
 
-    document_status = get_status(document_id)
-
     while True:
+        document_status = get_status(document_id)
+        print(document_status)
+
         if document_status == "processed":
-            download_exctracted_docx(document_id, pdf_name, output_folder)
-            break
+            extracted_pdf_path, extracted_pdf_name = download_exctracted_docx(document_id, pdf_name, output_folder)
+            return extracted_pdf_path, extracted_pdf_name
         else:
             time.sleep(20)
 
@@ -87,7 +90,7 @@ def translate_document(input_path, output_path):
         )
         os.remove(input_path)
         print("docu translated")
-        return(output_path)
+        return output_path
 
 
     except deepl.DocumentTranslationException as error:

@@ -61,10 +61,12 @@ def manage_attachment(mail):
                 if part.get_content_type() == "application/pdf":
                     print("PDF attachment found.")
                     pdf_path, pdf_name = download_pdf_attachment(mail, (num, part))
-                    # TO ADD: extract_pdf()
-                    #translated_document = translate_document()
-                    #send_email_with_attachment(sender, translated_document)
-                    #os.remove(translated_document)
+                    extracted_pdf_path, extracted_pdf_name = extract_pdf(pdf_path, pdf_name, extracted_folder)
+                    translated_document_path = os.path.join(translated_folder, extracted_pdf_name)
+                    translated_document = translate_document(extracted_pdf_path, translated_document_path)
+                    send_email_with_attachment(sender, translated_document)
+                    os.remove(translated_document)
+                    os.remove(pdf_path)
                     pdf_emails.append((num, part))  # Store the email ID and part for each PDF
                     has_pdf = True
             
@@ -77,7 +79,7 @@ def manage_attachment(mail):
     print("All unread emails processed.")
     return pdf_emails
 
-def receive_attachments():
+def process_pdf_attachments():
     mail = connect_to_inbox()
     pdf_emails = manage_attachment(mail)
 
@@ -86,5 +88,3 @@ def receive_attachments():
 
     mail.logout()
 
-
-receive_attachments()
