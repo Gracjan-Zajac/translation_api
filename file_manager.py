@@ -2,7 +2,7 @@ import os
 import email
 from email.header import decode_header
 from email_handler import connect_to_inbox, send_email_with_attachment
-from api_handler import translate_document
+from api_handler import extract_pdf, translate_document
 
 ALLOWED_SENDERS = os.getenv("ALLOWED_SENDERS", "").split(", ")
 

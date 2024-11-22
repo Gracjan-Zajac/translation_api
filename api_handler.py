@@ -45,10 +45,9 @@ def get_status(document_id):
 
     return status
 
-def download_exctracted_docx(document_id, filename, folder):
-    extracted_folder = folder
-    filename = filename[:-4] + ".docx"
-    extracted_docx = os.path.join(extracted_folder, filename)
+def download_exctracted_docx(document_id, filename, output_folder):
+    filename = filename[:-4] + "_APIprocessed.docx"
+    extracted_docx = os.path.join(output_folder, filename)
     url = f"https://www.handwritingocr.com/api/v2/documents/{document_id}.docx"
 
     headers = {
@@ -64,18 +63,15 @@ def download_exctracted_docx(document_id, filename, folder):
             file.write(chunk)
 
 def extract_pdf(pdf_path, pdf_name, output_folder):
-    extracted_path = os.path.join(output_folder, pdf_name)
-    pdf_path = pdf_path
     document_id = upload_pdf(pdf_path)
 
     time.sleep(20)
 
     document_status = get_status(document_id)
-    print(document_status)
 
     while True:
         if document_status == "processed":
-            download_exctracted_docx(document_id, extracted_path)
+            download_exctracted_docx(document_id, pdf_name, output_folder)
             break
         else:
             time.sleep(20)
@@ -107,12 +103,3 @@ def translate_document(input_path, output_path):
     except deepl.DeepLException as error:
         # Errors during upload raise a DeepLException
         print(error)
-
-pdf_path = "/home/gracjan/dev/translation_api/attachments/02 Active Cars Form - C GR-1.pdf"
-pdf_name = "02 Active Cars Form - C GR-1.pdf"
-folder = "extracted"
-path = os.path.join(folder, pdf_name)
-
-# extract_pdf(pdf_path, pdf_name, folder)
-
-download_exctracted_docx("WA9ArO38pE", pdf_name, folder)
