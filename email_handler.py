@@ -6,12 +6,13 @@ from email import encoders
 import imaplib
 import os
 
+IMAP_HOST = os.getenv("IMAP_HOST")
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 # Connect to the Gmail IMAP server
 def connect_to_inbox():
-    mail = imaplib.IMAP4_SSL("imap.gmail.com")
+    mail = imaplib.IMAP4_SSL(IMAP_HOST)
     mail.login(EMAIL_USER, EMAIL_PASSWORD)
     mail.select("inbox")
     return mail
