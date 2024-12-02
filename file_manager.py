@@ -76,7 +76,7 @@ def manage_attachment(mail):
         # mark as UNREAD if sender not in ALLOWED senders
         else:
             mail.store(num, '-FLAGS', '\\Seen')
-            print(f"Email from {sender} ({num}) ignored (not in allowed senders).")
+            print(f"Email from {sender} ignored (not in allowed senders).")
     
     print("All unread emails processed.")
     return pdf_emails
