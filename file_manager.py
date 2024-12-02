@@ -72,9 +72,11 @@ def manage_attachment(mail):
             
             if not has_pdf:
                 print("No PDF attachment found in this email.")
-
+                
+        # mark as UNREAD if sender not in ALLOWED senders
         else:
-            print(f"Email from {sender} ignored (not in allowed senders).")
+            mail.store(num, '-FLAGS', '\\Seen')
+            print(f"Email from {sender} ({num}) ignored (not in allowed senders).")
     
     print("All unread emails processed.")
     return pdf_emails
