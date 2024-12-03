@@ -46,7 +46,7 @@ def get_status(document_id):
     return status
 
 def download_exctracted_docx(document_id, filename, output_folder):
-    filename = filename[:-4] + "_APIprocessed.docx"
+    filename = filename[:-4] + "_processed.docx"
     output_file = os.path.join(output_folder, filename)
     url = f"https://www.handwritingocr.com/api/v2/documents/{document_id}.docx"
 
