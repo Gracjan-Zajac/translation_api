@@ -47,14 +47,12 @@ def get_status(document_id):
 
 def download_exctracted_docx(document_id, filename, output_folder):
     filename = filename[:-4] + "_APIprocessed.docx"
-    extracted_docx = os.path.join(output_folder, filename)
+    output_file = os.path.join(output_folder, filename)
     url = f"https://www.handwritingocr.com/api/v2/documents/{document_id}.docx"
 
     headers = {
         "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}",
     }
-    
-    output_file = extracted_docx
 
     response = requests.get(url, headers=headers, stream=True)
 
@@ -71,7 +69,7 @@ def extract_pdf(pdf_path, pdf_name, output_folder):
 
     while True:
         document_status = get_status(document_id)
-        print(document_status)
+        print(f"OCR status: {document_status}")
 
         if document_status == "processed":
             extracted_pdf_path, extracted_pdf_name = download_exctracted_docx(document_id, pdf_name, output_folder)
@@ -89,7 +87,7 @@ def translate_document(input_path, output_path):
             target_lang="EN-GB",
         )
         os.remove(input_path)
-        print("docu translated")
+        print("Docu translated")
         return output_path
 
 
