@@ -14,7 +14,7 @@ def upload_pdf(pdf_path):
 
     headers = {
         "Authorization": f"Bearer {HANDWRITINGOCR_API_KEY}",
-        # "Accept": "application/pdf",
+        "Accept": "application/json",
         # "Content-Type": "multipart/form-data"
     }
 
@@ -29,6 +29,7 @@ def upload_pdf(pdf_path):
     response = requests.post(url, headers=headers, files=files, data=data)
     files["file"].close()
 
+    print(f"Upolad pdf status code: {response.status_code}")
     document_id = response.json()["document_id"]
 
     return document_id
@@ -41,6 +42,7 @@ def get_status(document_id):
     }
 
     response = requests.get(url,headers=headers)
+    print(f"Get pdf status status code: {response.status_code}")
     status = response.json()["status"]
 
     return status
