@@ -94,12 +94,12 @@ def manage_attachment(mail):
     print("All unread emails processed.")
     return pdf_emails
 
-def process_pdf_attachments():
+def process_attachments():
     mail = connect_to_inbox()
     pdf_emails = manage_attachment(mail)
 
     if pdf_emails:
-        print("All PDF files processed")
+        print("All PDF/Word files processed")
 
     mail.logout()
 
