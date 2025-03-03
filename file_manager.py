@@ -55,10 +55,12 @@ def manage_attachment(mail):
                 subject = subject.decode()
             print(f"Processing email with subject: {subject}")
 
-            # Check for attachments and look for a PDF
-            has_pdf = False
+            # Check for attachments and look for a PDF or Word documents
+            has_pdf_or_word = False
             for part in msg.walk():
-                if part.get_content_type() == "application/pdf":
+                content_type = part.get_content_type()
+
+                if content_type == "application/pdf":
                     print("PDF attachment found.")
                     pdf_path, pdf_name = download_pdf_attachment(mail, (num, part))
                     extracted_pdf_path, extracted_pdf_name = extract_pdf(pdf_path, pdf_name, extracted_folder)
@@ -68,10 +70,21 @@ def manage_attachment(mail):
                     os.remove(translated_document)
                     os.remove(pdf_path)
                     pdf_emails.append((num, part))  # Store the email ID and part for each PDF
-                    has_pdf = True
-            
-            if not has_pdf:
-                print("No PDF attachment found in this email.")
+                    has_pdf_or_word = True
+
+                elif content_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
+                    print("Word attachment found.")
+                    word_path, word_name = download_pdf_attachment(mail, (num, part))
+                    processed_word_name = "processed_" + word_name
+                    translated_document_path = os.path.join(translated_folder, processed_word_name)
+                    translated_document = translate_document(word_path, translated_document_path)
+                    send_email_with_attachment(sender, translated_document)
+                    os.remove(translated_document)
+                    pdf_emails.append((num, part))  # Store the email ID and part for each PDF
+                    has_pdf_or_word = True
+
+            if not has_pdf_or_word:
+                print("No PDF/Word attachment found in this email.")
                 
         # mark as UNREAD if sender not in ALLOWED senders
         else:
