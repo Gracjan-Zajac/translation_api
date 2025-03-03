@@ -1,4 +1,5 @@
 import smtplib
+from email.utils import encode_rfc2231
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -26,10 +27,14 @@ def send_email_with_attachment(to_email, attachment_path):
     #msg.attach(MIMEText(body, "plain"))
 
     with open(attachment_path, "rb") as attachment:
-        part = MIMEBase("application", "ocet-stream")
+        part = MIMEBase("application", "octet-stream")
         part.set_payload(attachment.read())
         encoders.encode_base64(part)
-        part.add_header("Content-Disposition", f"attachment; filename={os.path.basename(attachment_path)}")
+
+        filename = os.path.basename(attachment_path)
+        encoded_filename = encode_rfc2231(filename, 'utf-8')
+
+        part.add_header("Content-Disposition", f'attachment; filename*={encoded_filename}')
         msg.attach(part)
 
     with smtplib.SMTP("smtp.gmail.com", 587) as server:

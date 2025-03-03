@@ -6,24 +6,33 @@ from api_handler import extract_pdf, translate_document
 
 ALLOWED_SENDERS = os.getenv("ALLOWED_SENDERS", "").split(", ")
 
-# Download the PDF attachment
-def download_pdf_attachment(mail, email_data):
+# Download the attachment
+def download_attachment(mail, email_data):
     attachment_folder = "attachments"
     email_id, part = email_data
     filename = part.get_filename()
+
     if filename:
         #Decode filename if needed
-        filename = decode_header(filename)[0][0].decode("utf-8") if isinstance(filename, bytes) else filename
-        filepath = os.path.join(attachment_folder, filename)    # Save in an "attachments" folder
+        decoded_parts = decode_header(filename)
+        filename = "".join(
+            part[0].decode(part[1] or "utf-8") if isinstance(part[0], bytes) else part[0]
+            for part in decoded_parts
+        )
 
-        # Write the PDF file to the directory
+        # Sanitize the filename to avoid issues with special characters
+        filename = filename.replace("/", "_").replace("\\", "_")
+
+        filepath = os.path.join(attachment_folder, filename)
+
+        # Write the file to the directory
         with open(filepath, "wb") as f:
             f.write(part.get_payload(decode=True))
         print(f"Downloaded: {filename}")
         return filepath, filename
     return None
 
-# Search and download PDFs from unread emails. Extract and translate text. Send translated .docx file back. 
+# Search and download attachment from unread emails. Extract and translate text. Send translated .docx file back. 
 def manage_attachment(mail):
     extracted_folder = "extracted"
     translated_folder = "translated"
@@ -62,7 +71,7 @@ def manage_attachment(mail):
 
                 if content_type == "application/pdf":
                     print("PDF attachment found.")
-                    pdf_path, pdf_name = download_pdf_attachment(mail, (num, part))
+                    pdf_path, pdf_name = download_attachment(mail, (num, part))
                     extracted_pdf_path, extracted_pdf_name = extract_pdf(pdf_path, pdf_name, extracted_folder)
                     translated_document_path = os.path.join(translated_folder, extracted_pdf_name)
                     translated_document = translate_document(extracted_pdf_path, translated_document_path)
@@ -74,7 +83,7 @@ def manage_attachment(mail):
 
                 elif content_type in ["application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]:
                     print("Word attachment found.")
-                    word_path, word_name = download_pdf_attachment(mail, (num, part))
+                    word_path, word_name = download_attachment(mail, (num, part))
                     processed_word_name = "processed_" + word_name
                     translated_document_path = os.path.join(translated_folder, processed_word_name)
                     translated_document = translate_document(word_path, translated_document_path)
