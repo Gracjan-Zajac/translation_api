@@ -43,3 +43,54 @@ def send_email_with_attachment(to_email, attachment_path):
         server.send_message(msg)
 
     print(f"Email with attachment sent to {to_email}")
+
+#Send an email to the user and inform that document cannot be processed due to an error
+def send_error_email(to_email):
+    body = f"""
+    Hi,
+
+    We encountered an error while processing your email. Our team has been notified, and we will resolve this issue as soon as possible.
+
+    Best regards,
+    Your Support Team
+    """
+
+    msg = MIMEMultipart()
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg["Subject"] = "Error Processing Your Email"
+    msg.attach(MIMEText(body, "plain"))
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+    print(f"Error email sent to {to_email}")
+
+#Send en email to the Support Team and inform anout an error
+def send_error_notification(to_email, error_message):
+    body = f"""
+    Hi,
+
+    An error occured in Translation API:
+
+    {error_message}
+
+    Please take care of it. People needs you!
+    """
+
+    msg = MIMEMultipart()
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg["Subject"] = "Translation API error"
+    msg.attach(MIMEText(body, "plain"))
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
+        server.login(EMAIL_USER, EMAIL_PASSWORD)
+        server.send_message(msg)
+
+    print(f"Error notificaton sent to {to_email}")
+
+
