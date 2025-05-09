@@ -59,6 +59,8 @@ def manage_attachment(mail):
             msg = email.message_from_bytes(msg_data[0][1])
             message_id = msg["Message-ID"]
 
+            translated_attachments = []
+
             #Decode sender's email address
             sender = msg["From"]
             if sender:
@@ -84,8 +86,7 @@ def manage_attachment(mail):
                         extracted_pdf_path, extracted_pdf_name = extract_pdf(pdf_path, pdf_name, extracted_folder)
                         translated_document_path = os.path.join(translated_folder, extracted_pdf_name)
                         translated_document = translate_document(extracted_pdf_path, translated_document_path)
-                        send_email_with_attachment(sender, translated_document, original_message_id=message_id, original_subject=subject)
-                        os.remove(translated_document)
+                        translated_attachments.append(translated_document)
                         os.remove(pdf_path)
                         pdf_emails.append((num, part))  # Store the email ID and part for each PDF
                         has_pdf_or_word = True
@@ -96,10 +97,14 @@ def manage_attachment(mail):
                         processed_word_name = "processed_" + word_name
                         translated_document_path = os.path.join(translated_folder, processed_word_name)
                         translated_document = translate_document(word_path, translated_document_path)
-                        send_email_with_attachment(sender, translated_document, original_message_id=message_id, original_subject=subject)
-                        os.remove(translated_document)
+                        translated_attachments.append(translated_document)
                         pdf_emails.append((num, part))  # Store the email ID and part for each PDF
                         has_pdf_or_word = True
+
+                if translated_attachments:
+                    send_email_with_attachment(sender, translated_attachments, original_message_id=message_id, original_subject=subject)
+                    for path in translated_attachments:
+                        os.remove(path)
 
                 if not has_pdf_or_word:
                     print("No PDF/Word attachment found in this email.")

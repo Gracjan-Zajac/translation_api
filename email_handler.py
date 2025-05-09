@@ -18,7 +18,7 @@ def connect_to_inbox():
     mail.select("inbox")
     return mail
 
-def send_email_with_attachment(to_email, attachment_path, original_message_id=None, original_subject=None):
+def send_email_with_attachment(to_email, attachment_paths, original_message_id=None, original_subject=None):
     msg = MIMEMultipart()
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
@@ -30,16 +30,17 @@ def send_email_with_attachment(to_email, attachment_path, original_message_id=No
 
     #msg.attach(MIMEText(body, "plain"))
 
-    with open(attachment_path, "rb") as attachment:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
+    for attachment_path in attachment_paths:
+        with open(attachment_path, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+            encoders.encode_base64(part)
 
-        filename = os.path.basename(attachment_path)
-        encoded_filename = encode_rfc2231(filename, 'utf-8')
+            filename = os.path.basename(attachment_path)
+            encoded_filename = encode_rfc2231(filename, 'utf-8')
 
-        part.add_header("Content-Disposition", f'attachment; filename*={encoded_filename}')
-        msg.attach(part)
+            part.add_header("Content-Disposition", f'attachment; filename*={encoded_filename}')
+            msg.attach(part)
 
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
