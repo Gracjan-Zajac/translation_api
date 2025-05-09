@@ -18,11 +18,15 @@ def connect_to_inbox():
     mail.select("inbox")
     return mail
 
-def send_email_with_attachment(to_email, attachment_path):
+def send_email_with_attachment(to_email, attachment_path, original_message_id=None, original_subject=None):
     msg = MIMEMultipart()
     msg["From"] = EMAIL_USER
     msg["To"] = to_email
-    msg["Subject"] = "Your translated document"
+    msg["Subject"] = f"Re: {original_subject}" if original_subject else "Your translated document"
+
+    if original_message_id:
+        msg["In-Reply-To"] = original_message_id
+        msg["References"] = original_message_id
 
     #msg.attach(MIMEText(body, "plain"))
 
